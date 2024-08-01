@@ -5,18 +5,18 @@ uname -a
 date
 
 DATASET=refcoco
-DATA_PATH=YOUR_COCO_PATH
-REFER_PATH=YOUR_REFER_PATH
-BERT_PATH=YOUR_MODEL_PATH/bert-base-uncased/
+DATA_PATH="/ailab_mat/dataset/refCOCO/images"
+REFER_PATH="/ailab_mat/dataset/RIS"
+BERT_PATH="/SSDe/heeseon/src/CARIS/ckpt/bert-base-uncased/"
 MODEL=caris
 SWIN_TYPE=base
 IMG_SIZE=448
-ROOT_PATH=YOUR_OUTPUT_PATH
+ROOT_PATH="/SSDe/heeseon/src/CARIS/output"
 RESUME_PATH=${ROOT_PATH}/model_best_${DATASET}.pth
 OUTPUT_PATH=${ROOT_PATH}/${DATASET}
 SPLIT=val
 
-cd YOUR_CODE_PATH
+# cd YOUR_CODE_PATH
 python eval.py --model ${MODEL} --swin_type ${SWIN_TYPE} \
         --dataset ${DATASET} --split ${SPLIT} \
         --img_size ${IMG_SIZE} --resume ${RESUME_PATH} \
