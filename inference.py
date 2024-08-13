@@ -45,6 +45,20 @@ def batch_evaluate(model, data_loader):
     eval_seg_iou_list = [.5, .7, .9]
     seg_correct = torch.zeros(len(eval_seg_iou_list)).cuda()
 
+    ## tokenizer
+    from bert.tokenization_bert import BertTokenizer
+    tokenizer = BertTokenizer.from_pretrained(args.bert_tokenizer)
+
+    ## visualize
+    import matplotlib.pyplot as plt
+    from torchvision.transforms.functional import to_pil_image
+    def normalize(image):
+        return (image - image.min()) / (image.max() - image.min())
+    import os
+    os.makedirs(f'./output/{args.dataset}', exist_ok=True)
+    os.makedirs(f'./output/{args.dataset}/u50', exist_ok=True)
+    total_idx = 0
+
     with torch.no_grad():
         for data in metric_logger.log_every(data_loader, 100, header):
 
@@ -67,6 +81,45 @@ def batch_evaluate(model, data_loader):
                 eval_seg_iou = eval_seg_iou_list[n_eval_iou]
                 seg_correct[n_eval_iou] += (iou >= eval_seg_iou).sum()
 
+            sentences_raw = []
+            for sentence in sentences:
+                # decoded_sentence = tokenizer.decode(sentence[0], skip_special_tokens=True)
+                decoded_sentence = tokenizer.decode(sentence.view(-1).tolist(), skip_special_tokens=True)
+                sentences_raw.append(decoded_sentence)
+                # print(decoded_sentence)
+
+            for idx in range(image.shape[0]):
+                plt.figure(figsize=(20, 10))
+
+                plt.subplot(1, 3, 1)
+                plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
+                # plt.imshow(to_pil_image(image[idx]))
+                plt.axis('off')
+                plt.title('input', fontdict={'fontsize' : 20})
+
+                plt.subplot(1, 3, 2)
+                plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
+                plt.imshow(targets['mask'][idx], alpha=0.5)
+                plt.axis('off')
+                plt.title('ground truth', fontdict={'fontsize' : 20})
+
+                plt.subplot(1, 3, 3)
+                plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
+                plt.imshow(output[idx][0].cpu(), alpha=0.5)
+                plt.axis('off')
+                plt.title('pred: CARIS', fontdict={'fontsize' : 20})
+
+                plt.subplots_adjust(wspace=0.05, hspace=0.05, top=2.4)
+                plt.suptitle(f'"{sentences_raw[idx]}"', fontsize=26)
+                if iou[idx] < 0.5:
+                    plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='red', ha='center', va='top', transform=plt.gcf().transFigure)
+                    plt.savefig(f'./output/{args.dataset}/u50/{total_idx}.png', bbox_inches='tight')
+                else:
+                    plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='blue', ha='center', va='top', transform=plt.gcf().transFigure)
+                plt.savefig(f'./output/{args.dataset}/{total_idx}.png', bbox_inches='tight')
+                total_idx += 1
+
+            
     torch.cuda.synchronize()
     cum_I = cum_I.cpu().numpy()
     cum_U = cum_U.cpu().numpy()

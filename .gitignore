@@ -1,2 +1,7 @@
 output/*
 ckpt/*
+input/*
+__pycache__/*
+bert/__pycache__/*
+model/__pycache__/*
+refer/__pycache__/*
