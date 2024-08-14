@@ -9,6 +9,30 @@ import utils
 import numpy as np
 from PIL import Image
 import torch.nn.functional as F
+from torchvision.transforms import functional as FC
+
+import pickle
+
+class Resize(object):
+    def __init__(self, h, w, eval_mode=False):
+        self.h = h
+        self.w = w
+        self.eval_mode = eval_mode
+
+    def __call__(self, image, target):
+        image = FC.resize(image, (self.h, self.w))
+        # If size is a sequence like (h, w), the output size will be matched to this.
+        # If size is an int, the smaller edge of the image will be matched to this number maintaining the aspect ratio
+        if not self.eval_mode:
+            if isinstance(target, list):
+                target_new = []
+                for _target in target:
+                    target_new.append(F.resize(_target, (self.h, self.w), interpolation=F.InterpolationMode.NEAREST))
+                target = target_new
+            else:
+                pass    ## only inference_demo.py
+                # target = F.resize(target, (self.h, self.w), interpolation=F.InterpolationMode.NEAREST)
+        return image, target
 
 
 def get_dataset(image_set, transform, args):
@@ -115,10 +139,9 @@ def batch_evaluate(model, data):
             plt.suptitle(f'"{sentences_raw[idx]}"', fontsize=26)
             if iou[idx] < 0.5:
                 plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='red', ha='center', va='top', transform=plt.gcf().transFigure)
-                plt.savefig(f'./output/{args.dataset}/u50/{total_idx}.png', bbox_inches='tight')
             else:
                 plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='blue', ha='center', va='top', transform=plt.gcf().transFigure)
-            plt.savefig(f'./output/{args.dataset}/{total_idx}.png', bbox_inches='tight')
+            plt.savefig(f'./output/demo/{total_idx}.png', bbox_inches='tight')
             total_idx += 1
 
             
@@ -139,7 +162,7 @@ def batch_evaluate(model, data):
     print(results_str)
 
 def get_transform(args):
-    transforms = [T.Resize(args.img_size, args.img_size, eval_mode=args.eval_ori_size),
+    transforms = [Resize(args.img_size, args.img_size, eval_mode=args.eval_ori_size),
                   T.ToTensor(),
                   T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
                   ]
@@ -163,8 +186,12 @@ def main(args):
         data = pickle.load(file)
     
     # replace data[1] image to platter1.png
-    
+    new_img = Image.open(args.image_path).convert("RGB")
+    dummy = torch.zeros((args.img_size, args.img_size), dtype=torch.int64)
+    transform = get_transform(args=args)
+    new_img_tensor, _ = transform(new_img, dummy)
 
+    data['image'][0] = data['image'][1] = new_img_tensor
 
     print(args.model)
     single_model = builder.__dict__[args.model](pretrained='',args=args)

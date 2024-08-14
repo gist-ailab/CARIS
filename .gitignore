@@ -4,5 +4,7 @@ input/*
 __pycache__/*
 bert/__pycache__/*
 model/__pycache__/*
+model/models/__pycache__/*
+model/backbones/__pycache__/*
 refer/__pycache__/*
 data/__pycache__/*
