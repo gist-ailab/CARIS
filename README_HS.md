@@ -19,3 +19,7 @@ pip install -r requirements.txt
 pip install transformers requests
 ```
 - download bert model from https://huggingface.co/google-bert/bert-base-uncased/tree/main
+
+
+## Demo
+- change CARIS/transforms.py file 33line.

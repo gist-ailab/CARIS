@@ -30,6 +30,7 @@ class Resize(object):
                     target_new.append(F.resize(_target, (self.h, self.w), interpolation=F.InterpolationMode.NEAREST))
                 target = target_new
             else:
+                # pass    ## only inference_demo.py
                 target = F.resize(target, (self.h, self.w), interpolation=F.InterpolationMode.NEAREST)
         return image, target
 
