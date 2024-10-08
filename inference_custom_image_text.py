@@ -12,6 +12,8 @@ import torch.nn.functional as F
 from torchvision.transforms import functional as FC
 
 import pickle
+from bert.tokenization_bert import BertTokenizer
+
 
 class Resize(object):
     def __init__(self, h, w, eval_mode=False):
@@ -70,7 +72,6 @@ def batch_evaluate(model, data):
     seg_correct = torch.zeros(len(eval_seg_iou_list)).cuda()
 
     ## tokenizer
-    from bert.tokenization_bert import BertTokenizer
     tokenizer = BertTokenizer.from_pretrained(args.bert_tokenizer)
 
     ## visualize
@@ -80,7 +81,6 @@ def batch_evaluate(model, data):
         return (image - image.min()) / (image.max() - image.min())
     import os
     os.makedirs(f'./output/demo', exist_ok=True)
-    total_idx = 0
 
     image = data['image']
     targets = data['targets']
@@ -114,36 +114,30 @@ def batch_evaluate(model, data):
             sentences_raw.append(decoded_sentence)
             # print(decoded_sentence)
 
-        for idx in range(image.shape[0]):
-            plt.figure(figsize=(20, 10))
+        idx = 0
+        # for idx in range(image.shape[0]):
+        plt.figure()
 
-            plt.subplot(1, 3, 1)
-            plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
-            # plt.imshow(to_pil_image(image[idx]))
-            plt.axis('off')
-            plt.title('input', fontdict={'fontsize' : 20})
+        plt.subplot(1, 2, 1)
+        plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
+        # plt.imshow(to_pil_image(image[idx]))
+        plt.axis('off')
+        plt.title('input', fontdict={'fontsize' : 10})
 
-            plt.subplot(1, 3, 2)
-            plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
-            plt.imshow(targets['mask'][idx], alpha=0.5)
-            plt.axis('off')
-            plt.title('ground truth', fontdict={'fontsize' : 20})
+        plt.subplot(1, 2, 2)
+        plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
+        plt.imshow(output[idx][0].cpu(), alpha=0.5)
+        plt.axis('off')
+        plt.title('pred: CARIS', fontdict={'fontsize' : 10})
 
-            plt.subplot(1, 3, 3)
-            plt.imshow(normalize(image[idx].permute(1, 2, 0).cpu().numpy()))
-            plt.imshow(output[idx][0].cpu(), alpha=0.5)
-            plt.axis('off')
-            plt.title('pred: CARIS', fontdict={'fontsize' : 20})
-
-            plt.subplots_adjust(wspace=0.05, hspace=0.05, top=2.4)
-            plt.suptitle(f'"{sentences_raw[idx]}"', fontsize=26)
-            if iou[idx] < 0.5:
-                plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='red', ha='center', va='top', transform=plt.gcf().transFigure)
-            else:
-                plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=24, color='blue', ha='center', va='top', transform=plt.gcf().transFigure)
-            plt.savefig(f'./output/demo/{total_idx}.png', bbox_inches='tight')
-            total_idx += 1
-
+        plt.subplots_adjust(wspace=0.05, hspace=0.05, top=2.4)
+        plt.suptitle(f'"{sentences_raw[idx]}"', fontsize=12)
+        # if iou[idx] < 0.5:
+        #     plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=15, color='red', ha='center', va='top', transform=plt.gcf().transFigure)
+        # else:
+        #     plt.text(0.5, 0.94, f'iou: {iou[idx]:.2f}', fontsize=15, color='blue', ha='center', va='top', transform=plt.gcf().transFigure)
+        plt.savefig(f'./output/demo/{idx}.png', bbox_inches='tight')
+        
             
     torch.cuda.synchronize()
     cum_I = cum_I.cpu().numpy()
@@ -185,13 +179,30 @@ def main(args):
     with open(args.pickle_path, 'rb') as file:
         data = pickle.load(file)
     
-    # replace data[1] image to platter1.png
+    
+    ##  custom image input  ##
     new_img = Image.open(args.image_path).convert("RGB")
     dummy = torch.zeros((args.img_size, args.img_size), dtype=torch.int64)
     transform = get_transform(args=args)
     new_img_tensor, _ = transform(new_img, dummy)
 
     data['image'][0] = data['image'][1] = new_img_tensor
+    
+    ##  custom text input  ##
+    tokenizer = BertTokenizer.from_pretrained(args.bert_tokenizer)
+    
+    input_text = args.input_text
+    encoded_inputs = tokenizer.encode_plus(
+        input_text,  # The input text to be encoded
+        add_special_tokens=True,  # Add [CLS] and [SEP] tokens
+        max_length=20,  # Maximum length of the tokenized input (from your tensor example)
+        pad_to_max_length=True,  # Pad the input to the max_length with [PAD] token
+        return_tensors='pt',  # Return tensors
+        return_attention_mask=True  # Return attention mask
+    )
+    
+    data['sentences'][0] = encoded_inputs['input_ids']
+    data['attentions'][0] = encoded_inputs['attention_mask']
 
     print(args.model)
     single_model = builder.__dict__[args.model](pretrained='',args=args)
@@ -211,13 +222,14 @@ if __name__ == "__main__":
     args.dataset = "refcoco"
     args.split = "val"
     args.img_size = 448
-    args.resume = "/SSDe/heeseon/src/CARIS/output/model_best_refcoco.pth"
+    args.resume = "/SSDe/heeseon_rho/src/CARIS/output/model_best_refcoco.pth"
     args.bert_tokenizer = "bert-base-uncased"
-    args.ck_bert = "/SSDe/heeseon/src/CARIS/ckpt/bert-base-uncased/"
+    args.ck_bert = "/SSDe/heeseon_rho/src/CARIS/ckpt/bert-base-uncased/"
     args.refer_data_root = "/ailab_mat/dataset/refCOCO/images"
     args.refer_root = "/ailab_mat/dataset/RIS"
-    args.pickle_path = "/SSDe/heeseon/src/CARIS/output/visualize/473.pickle"
-    args.image_path = "/SSDe/heeseon/src/CARIS/input/platter1.png"
+    args.pickle_path = "/SSDe/heeseon_rho/src/CARIS/output/visualize/473.pickle"
+    args.image_path = "/SSDe/heeseon_rho/src/CARIS/input/hyundai.png"
+    args.input_text = "car door"
     ###################################
 
     print('Image size: {}'.format(str(args.img_size)))

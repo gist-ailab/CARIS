@@ -83,7 +83,7 @@ def main(args):
     transform = get_transform(args)
 
     # Custom image and sentence inputs
-    custom_image_path = "/SSDe/heeseon/src/CARIS/input/platter.png"  # replace with your image path
+    custom_image_path = "/SSDe/heeseon_rho/src/CARIS/input/platter.png"  # replace with your image path
     custom_sentence = "middle platter"  # replace with your sentence
 
     # Perform inference
@@ -103,9 +103,9 @@ if __name__ == "__main__":
     args.dataset = "refcoco"
     # args.split = "val"
     args.img_size = 448
-    args.resume = "/SSDe/heeseon/src/CARIS/output/model_best_refcoco.pth"
+    args.resume = "/SSDe/heeseon_rho/src/CARIS/output/model_best_refcoco.pth"
     args.bert_tokenizer = "bert-base-uncased"
-    args.ck_bert = "/SSDe/heeseon/src/CARIS/ckpt/bert-base-uncased/"
+    args.ck_bert = "/SSDe/heeseon_rho/src/CARIS/ckpt/bert-base-uncased/"
     # args.refer_data_root = "/ailab_mat/dataset/refCOCO/images"
     # args.refer_root = "/ailab_mat/dataset/RIS"
     ###################################

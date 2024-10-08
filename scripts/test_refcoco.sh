@@ -7,11 +7,11 @@ date
 DATASET=refcoco
 DATA_PATH="/ailab_mat/dataset/refCOCO/images"
 REFER_PATH="/ailab_mat/dataset/RIS"
-BERT_PATH="/SSDe/heeseon/src/CARIS/ckpt/bert-base-uncased/"
+BERT_PATH="/SSDe/heeseon_rho/src/CARIS/ckpt/bert-base-uncased/"
 MODEL=caris
 SWIN_TYPE=base
 IMG_SIZE=448
-ROOT_PATH="/SSDe/heeseon/src/CARIS/output"
+ROOT_PATH="/SSDe/heeseon_rho/src/CARIS/output"
 RESUME_PATH=${ROOT_PATH}/model_best_${DATASET}.pth
 OUTPUT_PATH=${ROOT_PATH}/${DATASET}
 SPLIT=val

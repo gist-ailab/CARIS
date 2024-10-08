@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from transformers import BertTokenizer
 
 # 파일 경로 설정
-file_path = '/SSDe/heeseon/src/CARIS/output/visualize/473.pickle'
+file_path = '/SSDe/heeseon_rho/src/CARIS/output/visualize/473.pickle'
 
 # pickle 파일을 읽어오기
 with open(file_path, 'rb') as file:
@@ -42,7 +42,7 @@ for i in range(batch_size):
     plt.figure()
     plt.imshow(img)
     plt.axis('off')  # 축을 표시하지 않음
-    plt.savefig(f'/SSDe/heeseon/src/CARIS/output/visualize/image_{i}.png', bbox_inches='tight', pad_inches=0)
+    plt.savefig(f'/SSDe/heeseon_rho/src/CARIS/output/visualize/image_{i}.png', bbox_inches='tight', pad_inches=0)
 
 
 ###  print sentences  ###
@@ -63,7 +63,7 @@ for i in range(targets['mask'].shape[0]):
     plt.title(f"Mask for class {targets['cls'][i].item()}")
     plt.suptitle(decoded_sentences[i], fontsize=14)
     plt.axis('off')
-    plt.savefig(f'/SSDe/heeseon/src/CARIS/output/visualize/mask_{i}.png', bbox_inches='tight')
+    plt.savefig(f'/SSDe/heeseon_rho/src/CARIS/output/visualize/mask_{i}.png', bbox_inches='tight')
     plt.close()
 
 ###  visualize attentions  ###
@@ -91,5 +91,5 @@ for i in range(sentences.shape[0]):
     plt.text(0.5, 0.5, visualized_sentence, fontsize=14, ha='center')
     plt.axis('off')
     plt.title(f"Sentence {i + 1} Visualization")
-    plt.savefig(f'/SSDe/heeseon/src/CARIS/output/visualize/sentence_attention_{i}.png', bbox_inches='tight')
+    plt.savefig(f'/SSDe/heeseon_rho/src/CARIS/output/visualize/sentence_attention_{i}.png', bbox_inches='tight')
     plt.close()
